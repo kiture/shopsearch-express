@@ -38,8 +38,8 @@ router.get('/allegro/categories', (req, res) => {
 
 app.use('/.netlify/functions/server', router);  // path must route to lambda
 app.use('/', (req, res) => res.sendFile(path.join(__dirname, '../index.html')));
-app.use(cors());
-app.use(express.static('client'));
+//app.use(cors());
+//app.use(express.static('client'));
 app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
 app.use(bodyParser.json({limit: '50mb', extended: true}));
 
