@@ -7,6 +7,7 @@ const cors = require('cors');
 const jsdom = require("jsdom");
 const fs = require('fs');
 const {JSDOM} = jsdom;
+const serverless = require('serverless-http');
 
 const ALLEGRO_CLIENT_ID = "aea655fde4f04b349a4bbad8102296a3";
 const ALLEGRO_CLIENT_SECRET = "MVe8KDA305fHqWZrtzY9Ce3maTJ2bDTVdmfTEbnNAThLtFUsF1VsU6YELDYuVfLE";
@@ -49,22 +50,18 @@ async function makeAllegroReq(req, res, url) {
     res.send(JSON.stringify(json));
 }
 
-app.use(cors());
-app.use(express.static('client'));
-app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
-app.use(bodyParser.json({limit: '50mb', extended: true}));
-
-app.get("/olx/categories", (req, res) => {
+const router = express.Router();
+router.get("/olx/categories", (req, res) => {
     res.setHeader('Content-Type', 'application/json');
     res.send(JSON.stringify(dbOlx.read().value()));
 });
 
-app.get('/allegro/categories', (req, res) => {
+router.get('/allegro/categories', (req, res) => {
     res.setHeader('Content-Type', 'application/json');
     res.send(JSON.stringify(dbAllegro.read().value()));
 });
 
-app.get('/allegro/offers', (req, res) => {
+router.get('/allegro/offers', (req, res) => {
     if (!tokenType) {
         generateAllegroToken().then(() => makeAllegroReq(req, res, ALLEGRO_API_URL + "/offers/listing"));
     } else {
@@ -72,14 +69,14 @@ app.get('/allegro/offers', (req, res) => {
     }
 });
 
-app.get("/olx/offers", async (req, res) => {
+router.get("/olx/offers", async (req, res) => {
     let url = `${OLX_URL}/${req.query["path"]}`;
     let offers = await findOlxOffer(url, 1);
     res.setHeader('Content-Type', 'application/json');
     res.send(JSON.stringify(offers));
 });
 
-app.post("/items/save", (req, res) => {
+router.post("/items/save", (req, res) => {
     let user = req.query["user"];
     let item = req.body;
     let userFile = getUserFile(user);
@@ -100,7 +97,7 @@ app.post("/items/save", (req, res) => {
     res.send("success");
 });
 
-app.post("/olx/city/save", (req, res) => {
+router.post("/olx/city/save", (req, res) => {
     let user = req.query["user"];
     let cities = req.body;
     let userFile = getUserFile(user);
@@ -110,13 +107,19 @@ app.post("/olx/city/save", (req, res) => {
     res.send("success");
 });
 
-app.get("/", (req, res) => {
+router.get("/", (req, res) => {
     res.send("Working");
 });
 
-app.listen(3000, () => {
+app.use(cors());
+app.use(express.static('client'));
+app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
+app.use(bodyParser.json({limit: '50mb', extended: true}));
+app.use("/", router);
+
+/*app.listen(3000, () => {
     console.log("started express server")
-});
+});*/
 
 function saveUserFile(user, userJson) {
     let filePath = `client/${user}.json`;
@@ -194,3 +197,6 @@ function isEmpty(obj) {
 
     return true;
 }
+
+module.exports = app;
+module.exports.handler = serverless(app);
