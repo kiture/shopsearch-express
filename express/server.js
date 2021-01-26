@@ -6,6 +6,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const jsdom = require("jsdom");
 const fs = require('fs');
+const serverless = require('serverless-http');
 const {JSDOM} = jsdom;
 
 const ALLEGRO_CLIENT_ID = "aea655fde4f04b349a4bbad8102296a3";
@@ -114,9 +115,9 @@ app.get("/", (req, res) => {
     res.send("Working");
 });
 
-app.listen(8080, () => {
+/*app.listen(8080, () => {
     console.log("started express server")
-});
+});*/
 
 function saveUserFile(user, userJson) {
     let filePath = `client/${user}.json`;
@@ -194,3 +195,7 @@ function isEmpty(obj) {
 
     return true;
 }
+
+
+module.exports = app;
+module.exports.handler = serverless(app);
